@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Contact Form</title>
+    <link rel="stylesheet" href="styles.css">
+    
+</head>
+
+<body>
+    <div class="container">
+        <div class="form-container">
+            <div class="left-container">
+                <div class="left-inner-container">
+                    <h2>Let's Chat</h2>
+                    <p>Whether you have a question, want to start a project or simply want to connect.</p>
+                    <br>
+                    <p>Feel free to send me a message in the contact form</p>
+                </div>
+            </div>
+            <div class="right-container">
+                <div class="right-inner-container">
+                    <form id="contactForm" action="#">
+                        <h2 class="lg-view ">Contact</h2>
+                        <h2 class="sm-view">Welcome Back</h2>
+                        
+     
+    
+                        <input type="text" id="name" placeholder="Name" /><br />
+    
+                        <input type="email" id="email" placeholder="Email" /><br />
+    
+                        <textarea id="roll" placeholder="Roll No"></textarea><br />
+    
+                        <input type="text" id="branch" placeholder="Branch" /><br />
+    
+                        <input type="text" id="material" placeholder="Material" /><br />
+                        <input type="submit" value="Send" />
+    
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        const contactForm = document.getElementById('contactForm');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const rollInput = document.getElementById('roll');
+        const branchInput = document.getElementById('branch');
+        const materialInput = document.getElementById('material');
+
+        contactForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            await fetch('/send-message', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    name: nameInput.value,
+                    email: emailInput.value,
+                    roll: rollInput.value,
+                    branch: branchInput.value,
+                    material: materialInput.value,
+                }),
+            });
+            nameInput.value = '';
+            emailInput.value = '';
+            rollInput.value = '';
+            branchInput.value = '';
+            materialInput.value = '';
+        });
+    </script>
+</body>
+
+</html>
