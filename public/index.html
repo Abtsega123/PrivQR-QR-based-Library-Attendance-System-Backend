@@ -41,17 +41,25 @@
                         <input type="submit" value="Send" />
     
                     </form>
+                <form id="leaveForm" action="#">
+                    <input type="submit" value="Leave" />
+                </form>
+
+</form>
                 </div>
             </div>
         </div>
     </div>
+    <!-- <script src="../src/sheetClient.js"></script> -->
     <script>
         const contactForm = document.getElementById('contactForm');
+         const leaveForm = document.getElementById('leaveForm');
         const nameInput = document.getElementById('name');
         const emailInput = document.getElementById('email');
         const rollInput = document.getElementById('roll');
         const branchInput = document.getElementById('branch');
         const materialInput = document.getElementById('material');
+       
 
         contactForm.addEventListener('submit', async e => {
             e.preventDefault();
@@ -74,7 +82,31 @@
             branchInput.value = '';
             materialInput.value = '';
         });
-    </script>
+
+        
+  leaveForm.addEventListener('submit', async e => {
+   e.preventDefault();
+    await fetch("/leave", {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: nameInput.value,
+        email: emailInput.value,
+        roll: rollInput.value,
+        branch: branchInput.value,
+        material: materialInput.value,
+      }),
+    });
+    nameInput.value = '';
+    emailInput.value = '';
+    rollInput.value = '';
+    branchInput.value = '';
+    materialInput.value = '';
+  });
+
+</script>
 </body>
 
 </html>

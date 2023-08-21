@@ -127,7 +127,7 @@ button:hover {
 /* Media Queries */
 @media only screen and (max-width: 600px) {
     .container {
-        margin: 20px;
+        margin: 70px;
         /* Add space to all sides */
         width: calc(100% - 40px);
         /* Adjust width to create space between corners */

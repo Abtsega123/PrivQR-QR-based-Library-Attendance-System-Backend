@@ -1,3 +1,66 @@
+import express from "express";
+import { z, ZodError } from "zod";
+
+import sheets, { SHEET_ID } from "./sheetClient.js";
+
+const app = express();
+const contactFormSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
+  email: z.string().email(),
+  roll: z.string().min(1, { roll: "roll is required" }),
+
+  branch: z.string().min(1, { message: "Branch is required" }),
+  material: z.string().min(1, { message: "Material is required" }),
+});
+
+app.use(express.json());
+app.use(express.static("public"));
+
+app.post("/send-message", async (req, res) => {
+  try {
+    const body = contactFormSchema.parse(req.body);
+
+    // Add formatted timestamp to the data
+    const timestamp = new Date().toLocaleTimeString(); // Get only the time part
+    const rows = [...Object.values(body), timestamp]; // Add formatted timestamp at the end
+
+    console.log(rows);
+
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SHEET_ID,
+      range: "Data!A:F", // Update the range to include the new timestamp column
+      insertDataOption: "INSERT_ROWS",
+      valueInputOption: "RAW",
+      requestBody: {
+        values: [rows],
+      },
+    });
+    res.json({ message: "Data added successfully" });
+  } catch (error) {
+    if (error instanceof ZodError) {
+      res.status(400).json({ error: error.message });
+    } else {
+      res.status(400).json({ error });
+    }
+  }
+});
+
+
+app.listen(5000, () => console.log(`App running on http://localhost:5000`));
+
+
+
+
+
+
+
+
+
+
+
+#################################################################
+
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -6,60 +69,51 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Contact Form</title>
-    <style>
-        .container {
-            width: 80%;
-            margin: auto;
-            margin-top: 50px;
-        }
-
-        form {
-            font-family: Arial, sans-serif;
-            color: #333;
-        }
-
-        input[type='text'],
-        input[type='email'],
-        textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-            margin-top: 6px;
-            margin-bottom: 16px;
-            resize: vertical;
-        }
-
-        input[type='submit'] {
-            background-color: #4caf50;
-            color: white;
-            padding: 12px 20px;
-            border: none;
-            cursor: pointer;
-        }
-
-        input[type='submit']:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <link rel="stylesheet" href="styles.css">
+    
 </head>
 
 <body>
     <div class="container">
-        <form id="contactForm">
-            <label for="name">Name:</label><br />
-            <input type="text" id="name" /><br />
-            <label for="email">Email:</label><br />
-            <input type="email" id="email" /><br />
-            <label for="roll">roll:</label><br />
-            <textarea id="roll"></textarea><br />
-            <label for="branch">Branch:</label><br />
-            <input type="text" id="branch" /><br />
-            <label for="material">Material:</label><br />
-            <input type="text" id="material" /><br />
-            <input type="submit" value="Send" />
-        </form>
+        <div class="form-container">
+            <div class="left-container">
+                <div class="left-inner-container">
+                    <h2>Let's Chat</h2>
+                    
+                    <br>
+                    <p>Feel free to send me a message in the contact form</p>
+                </div>
+            </div>
+            <div class="right-container">
+                <div class="right-inner-container">
+                    <form id="contactForm" action="#">
+                        <h2 class="lg-view ">Contact</h2>
+                        <h2 class="sm-view">Welcome Back</h2>
+                        
+     
+    
+                        <input type="text" id="name" placeholder="Name" /><br />
+    
+                        <input type="email" id="email" placeholder="Email" /><br />
+    
+                        <textarea id="roll" placeholder="Roll No"></textarea><br />
+    
+                        <input type="text" id="branch" placeholder="Branch" /><br />
+    
+                        <input type="text" id="material" placeholder="Material" /><br />
+                        <input type="submit" value="Send" />
+    
+                    </form>
+                <form id="leaveForm" action="#">
+                    <input type="submit" value="Leave" />
+                </form>
+
+</form>
+                </div>
+            </div>
+        </div>
     </div>
+    <script src="../src/sheetClient.js"></script>
     <script>
         const contactForm = document.getElementById('contactForm');
         const nameInput = document.getElementById('name');
@@ -89,7 +143,60 @@
             branchInput.value = '';
             materialInput.value = '';
         });
-    </script>
+
+        
+  leaveForm.addEventListener('submit', async e => {
+    e.preventDefault();
+
+    // Get the current timestamp
+    const timestamp = new Date().toLocaleTimeString();
+
+    // Get the data from the contact form
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const roll = document.getElementById('roll').value;
+    const branch = document.getElementById('branch').value;
+    const material = document.getElementById('material').value;
+
+    // Check if the data already exists in the sheet
+    const sheetData = await sheets.spreadsheets.values.get({
+      spreadsheetId: SHEET_ID,
+      range: "Data!A:F",
+    });
+    const existingData = sheetData.data.values;
+
+    // Convert existingData into a more convenient object format
+    const existingDataObject = existingData.reduce((acc, row) => {
+      acc[row[0]] = row[1];
+      return acc;
+    }, {});
+
+    // Check if the data already exists using the name and email as unique identifiers
+    if (existingDataObject[name] === email) {
+      // Data already exists, only update the timestamp
+      await sheets.spreadsheets.values.update({
+        spreadsheetId: SHEET_ID,
+        range: `Data!G${existingData.indexOf(existingDataObject[name]) + 1}`,
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[timestamp]],
+        },
+      });
+    } else {
+      // Data doesn't exist, append the data along with the timestamp
+      await sheets.spreadsheets.values.append({
+        spreadsheetId: SHEET_ID,
+        range: "Data!A:F",
+        insertDataOption: "INSERT_ROWS",
+        valueInputOption: "RAW",
+        requestBody: {
+          values: [[name, email, roll, branch, material, timestamp]],
+        },
+      });
+    }
+  });
+
+</script>
 </body>
 
 </html>
